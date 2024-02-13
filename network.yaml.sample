@@ -1,0 +1,14 @@
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "base64 goes here"
+
+# Enable esphome OTA API
+ota:
+  password: "something clever"
+
+wifi:
+  ssid: "my-cool-wifi-ssid"
+  password: "my-cool-psk-secret"
+  # force hostname used for OTA updates/logs if .local doesn't work on your LAN
+  use_address: "patio-door-ctl.lan"

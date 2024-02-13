@@ -1,0 +1,151 @@
+  # based on https://github.com/esphome/firmware/blob/main/bluetooth-proxy/esp32-generic.yaml
+esphome:
+  name: sliding-door-ctl
+  friendly_name: Sliding Door
+  name_add_mac_suffix: false
+  project:
+    name: esphome.bluetooth-proxy
+    version: "1.0"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  ## dump out more stuff
+  #level: VERBOSE
+
+<<: !include network.yaml
+
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+
+bluetooth_proxy:
+   active: true
+
+### refer to "Modbus RTU protocol for ATM door system V2" documentataion
+### http://autoslide.com/wp-content/uploads/2022/11/AutoSlide-ATM2-Modbus-Protocols.pdf
+uart:
+  id: mod_bus
+  tx_pin: 21
+  rx_pin: 22
+  baud_rate: 9600
+  stop_bits: 1
+  data_bits: 8
+  parity: NONE
+
+modbus:
+  # "DE"/"RE"
+  flow_control_pin: 23
+  send_wait_time: 700ms
+  id: mod_bus_autoslide
+
+modbus_controller:
+  - id: autoslide
+    ## the Modbus device addr
+    address: 0x1
+    modbus_id: mod_bus_autoslide
+    command_throttle: 200ms
+    setup_priority: -10
+    update_interval: 5s
+
+text_sensor:
+  - platform: modbus_controller
+    modbus_controller_id: autoslide
+    id: status
+    name: "opener status"
+    address: 0x0004
+    force_new_range: true
+    register_type: holding
+    raw_encode: HEXBYTES
+    # optionsmap might be supported?: https://github.com/esphome/feature-requests/issues/1642
+    lambda: |-
+      uint16_t value = modbus_controller::word_from_hex_str(x, 0);
+      switch (value) {
+        case 0: return std::string("closed");
+        case 1: return std::string("closed & locked");
+        case 2: return std::string("open");
+        default: return std::string("Unknown");
+      }
+      return x;
+
+select:
+  - platform: modbus_controller
+    modbus_controller_id: autoslide
+    id: mode
+    name: "select mode"
+    address: 0x0002
+    force_new_range: true
+    value_type: U_WORD
+    optionsmap:
+      "Auto": 0
+      "Stacker": 1
+      "Lock": 2
+      "Pet": 3
+
+## XXX: unfortunately there's no config for a "momentary" appearance to these switches
+## so to activate twice in the UI, you need to "turn it off and on again"
+##  and in between, they send a read command which the door rejects
+##output:
+##  - platform: modbus_controller
+##    modbus_controller_id: autoslide
+##    id: indoor_button
+##    address: 0x1
+##    value_type: U_WORD
+##    register_type: holding
+##    multiply: 1
+##  - platform: modbus_controller
+##    modbus_controller_id: autoslide
+##    id: pet_sensor
+##    address: 0x1
+##    value_type: U_WORD
+##    register_type: holding
+##    multiply: 3
+##switch:
+##  - platform: output
+##    name: "door button"
+##    output: 'indoor_button'
+##  - platform: output
+##    name: "pet sensor"
+##    output: 'pet_sensor'
+
+## hand-code our switches to make them act like write-only momentary buttons
+switch:
+  - platform: modbus_controller
+    modbus_controller_id: autoslide
+    id: door_button
+    register_type: holding
+    address: 0x1
+    name: "door button"
+    # avoid polling this register every loop since it rejects reads
+    skip_updates: 100000
+    lambda: |-
+      return false;
+    write_lambda: |-
+      payload.push_back(0x1);  // device address
+      payload.push_back(0x6);  // write register
+      payload.push_back(0x00); // high byte address
+      payload.push_back(0x01); // low byte address
+      payload.push_back(0x00); // high byte data
+      payload.push_back(0x01); // low byte data - door button
+      return false; // make it a momentary, report its off
+  - platform: modbus_controller
+    modbus_controller_id: autoslide
+    id: pet_sensor
+    register_type: holding
+    address: 0x1
+    name: "pet sensor"
+    # avoid polling this register every loop since it rejects reads
+    skip_updates: 100000
+    lambda: |-
+      return false;
+    write_lambda: |-
+      payload.push_back(0x1);  // device address
+      payload.push_back(0x6);  // write register
+      payload.push_back(0x00); // high byte address
+      payload.push_back(0x01); // low byte address
+      payload.push_back(0x00); // high byte data
+      payload.push_back(0x03); // low byte data - pet sensor
+      return false; // make it a momentary, report its off
