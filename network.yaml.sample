@@ -10,5 +10,5 @@ ota:
 wifi:
   ssid: "my-cool-wifi-ssid"
   password: "my-cool-psk-secret"
-  # force hostname used for OTA updates/logs if .local doesn't work on your LAN
-  use_address: "patio-door-ctl.lan"
+  # force domainname used for OTA updates/logs if <devicename>.local doesn't work on your LAN
+  domain: ".lan"
