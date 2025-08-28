@@ -81,68 +81,29 @@ select:
       "Lock": 2
       "Pet": 3
 
-## XXX: unfortunately there's no config for a "momentary" appearance to these switches
-##      in Home-Assisant
-## so to activate twice in HA's UI, you'd need to "turn it off and on again"
-##  and in between, esphome sends a read command which the door rejects
-##output:
-##  - platform: modbus_controller
-##    modbus_controller_id: autoslide
-##    id: indoor_button
-##    address: 0x1
-##    value_type: U_WORD
-##    register_type: holding
-##    multiply: 1
-##  - platform: modbus_controller
-##    modbus_controller_id: autoslide
-##    id: pet_sensor
-##    address: 0x1
-##    value_type: U_WORD
-##    register_type: holding
-##    multiply: 3
-##switch:
-##  - platform: output
-##    name: "door button"
-##    output: 'indoor_button'
-##  - platform: output
-##    name: "pet sensor"
-##    output: 'pet_sensor'
-
-## hand-code our switches to make them act like write-only momentary buttons
-switch:
+output:
   - platform: modbus_controller
     modbus_controller_id: autoslide
-    id: door_button
-    register_type: holding
+    id: indoor_button
     address: 0x1
-    name: "door button"
-    # avoid polling this register every loop since it rejects reads
-    skip_updates: 100000
-    lambda: |-
-      return false;
-    write_lambda: |-
-      payload.push_back(0x1);  // device address
-      payload.push_back(0x6);  // write register
-      payload.push_back(0x00); // high byte address
-      payload.push_back(0x01); // low byte address
-      payload.push_back(0x00); // high byte data
-      payload.push_back(0x01); // low byte data - door button
-      return false; // make it a momentary, report its off
+    value_type: U_WORD
+    register_type: holding
+    multiply: 1
   - platform: modbus_controller
     modbus_controller_id: autoslide
     id: pet_sensor
-    register_type: holding
     address: 0x1
+    value_type: U_WORD
+    register_type: holding
+    multiply: 3
+
+button:
+  - platform: output
+    name: "door button"
+    output: "indoor_button"
+    duration: 500ms
+  - platform: output
     name: "pet sensor"
-    # avoid polling this register every loop since it rejects reads
-    skip_updates: 100000
-    lambda: |-
-      return false;
-    write_lambda: |-
-      payload.push_back(0x1);  // device address
-      payload.push_back(0x6);  // write register
-      payload.push_back(0x00); // high byte address
-      payload.push_back(0x01); // low byte address
-      payload.push_back(0x00); // high byte data
-      payload.push_back(0x03); // low byte data - pet sensor
-      return false; // make it a momentary, report its off
+    output: "pet_sensor"
+    duration: 500ms
+
