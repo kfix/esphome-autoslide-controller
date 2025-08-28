@@ -5,6 +5,7 @@ api:
 
 # Enable esphome OTA API
 ota:
+  platform: esphome
   password: "something clever"
 
 wifi:

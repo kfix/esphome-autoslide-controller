@@ -1,4 +1,4 @@
-  # based on https://github.com/esphome/firmware/blob/main/bluetooth-proxy/esp32-generic.yaml
+# based on https://github.com/esphome/firmware/blob/main/bluetooth-proxy/esp32-generic.yaml
 esphome:
   name: sliding-door-ctl
   friendly_name: Sliding Door
@@ -6,6 +6,7 @@ esphome:
   project:
     name: esphome.bluetooth-proxy
     version: "1.0"
+  comment: "https://github.com/kfix/esphome-autoslide-controller"
 
 esp32:
   board: esp32dev
@@ -59,17 +60,12 @@ text_sensor:
     address: 0x0004
     force_new_range: true
     register_type: holding
+    filters:
+      - map:
+        - 0000 -> closed
+        - 0001 -> closed & locked
+        - 0002 -> open
     raw_encode: HEXBYTES
-    # optionsmap might be supported?: https://github.com/esphome/feature-requests/issues/1642
-    lambda: |-
-      uint16_t value = modbus_controller::word_from_hex_str(x, 0);
-      switch (value) {
-        case 0: return std::string("closed");
-        case 1: return std::string("closed & locked");
-        case 2: return std::string("open");
-        default: return std::string("Unknown");
-      }
-      return x;
 
 select:
   - platform: modbus_controller
@@ -86,8 +82,9 @@ select:
       "Pet": 3
 
 ## XXX: unfortunately there's no config for a "momentary" appearance to these switches
-## so to activate twice in the UI, you need to "turn it off and on again"
-##  and in between, they send a read command which the door rejects
+##      in Home-Assisant
+## so to activate twice in HA's UI, you'd need to "turn it off and on again"
+##  and in between, esphome sends a read command which the door rejects
 ##output:
 ##  - platform: modbus_controller
 ##    modbus_controller_id: autoslide
