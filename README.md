@@ -6,8 +6,9 @@ Once discovered in Home Assistant, you can remotely trigger sensors & buttons th
 
 # wiring from the autoslide
 
-My autoslide has a "V2" control board and the unit was manufactured in 2022.  
-I had to remove both the external cover and the interior electronics cover to expose its [RS485](https://en.wikipedia.org/wiki/RS-485) pin header (top right corner), and then wirewrapped its three left-most pins to 5 inches of 30AWG going to the RS485 module.  
+My autoslide has a "V2" control board and the unit was manufactured in 2022.
+Allegedly, later revisions of the board [degrade or entirely remove Modbus support](https://community.hubitat.com/t/project-diy-hubduino-modbus-rs485-controller-for-autoslide/154510/14)!  
+I had to remove both the external cover and the interior electronics cover to expose its [RS485](https://en.wikipedia.org/wiki/RS-485) jack (top right cornet, white 4 pin JST-PH), and then connected that to a RS485 converter module.  
 
 * pin 1: B (D-)
 * pin 2: A (D+)
@@ -24,7 +25,7 @@ you will have to play with flip flopping the TX/RX and A/B connections until you
 
 you can set logs to VERBOSE to see individual send/reply bytes, the autoslide PDF linked in the yaml has examples of what you should be seeing.
 
-if your module has RX/TX leds, seeing both flash at the same time is also a good sign you've got the wiring correct.
+if your module has RX/TX leds, seeing both blink at the same time is also a good sign you've got the wiring correct.
 
 # building
 
