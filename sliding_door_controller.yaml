@@ -21,10 +21,10 @@ logger:
 
 esp32_ble_tracker:
   scan_parameters:
-    active: true
+    active: false
 
 bluetooth_proxy:
-   active: true
+   active: false
 
 ### refer to "Modbus RTU protocol for ATM door system V2" documentataion
 ### http://autoslide.com/wp-content/uploads/2022/11/AutoSlide-ATM2-Modbus-Protocols.pdf
